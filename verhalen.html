@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#18382f"><meta name="apple-mobile-web-app-capable" content="yes"><title>luister. — Mijn verhalen</title>
+<style>
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}
+body{background:#18382f;color:#f5f9f2;margin:0;padding:max(18px,env(safe-area-inset-top)) 18px max(25px,env(safe-area-inset-bottom));min-height:100dvh}
+main{max-width:480px;margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-size:36px;letter-spacing:-2px;margin:0}.sub{font-size:12px;color:#b5d0bd;letter-spacing:1px;text-transform:uppercase}
+button,input,select{font:inherit}
+button{cursor:pointer;min-height:49px;padding:10px 15px;background:#dce9c9;color:#18382f;border:0;border-radius:14px;font-weight:650}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible{outline:3px solid #f2dfaa;outline-offset:3px}
+.iconbtn{font-size:22px;background:#315448;color:#fff;min-width:52px}
+#cover{display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,#a8c2a5,#dce9c9);border-radius:25px;height:min(47vw,245px);min-height:165px;color:#18382f;font-size:95px;margin:22px 0 17px}
+#title{text-align:center;font-size:25px;line-height:1.2;min-height:31px;margin:10px 0 4px}
+#subtitle{text-align:center;color:#c7dbc9;font-size:14px;min-height:20px;margin:0 0 16px}
+#seek{width:100%;accent-color:#dce9c9}#times{display:flex;justify-content:space-between;color:#c7dbc9;font-size:12px;font-variant-numeric:tabular-nums}
+#controls{display:flex;justify-content:center;align-items:center;gap:16px;margin:22px 0}#controls button{font-size:25px;min-width:64px;min-height:62px}#play{background:#fff;font-size:33px;width:76px;height:76px;border-radius:50%}
+#timerRow{display:flex;align-items:center;justify-content:space-between;border-radius:17px;background:#264e3e;padding:12px 14px;margin:18px 0;font-size:13px}#timerRow button{background:#315448;color:#f5f9f2;min-height:36px}
+h2{font-size:19px;margin:25px 0 12px}.story{display:flex;align-items:center;gap:13px;width:100%;margin:8px 0;padding:10px 12px;background:#285140;color:white;text-align:left;border:2px solid transparent}.story.active{border-color:#dce9c9}.emoji{font-size:31px}.story span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#empty{background:#284d3e;border-radius:20px;padding:18px;color:#d9e8dc;line-height:1.45}.hint{color:#c7dbc9;font-size:12px;line-height:1.5}
+#info{color:#dce9c9;min-height:20px;font-size:13px}#manageBtn{margin-top:14px}
+dialog{background:#f8faf7;color:#18382f;border:0;border-radius:20px;width:calc(100% - 24px);max-width:430px;padding:23px;max-height:88dvh;overflow:auto}dialog::backdrop{background:#000a}
+dialog h2{margin-top:0}dialog label{display:block;margin-top:12px;margin-bottom:5px;font-weight:650}
+dialog input,dialog select{background:white;color:#18382f;width:100%;padding:12px;border:1px solid #a3bdac;border-radius:10px}
+dialog button{margin-top:14px;margin-right:7px}.secondary{background:#dce6dc}
+#manageList>div{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #b7cdbf;gap:7px;padding:10px 0;font-size:14px}
+#manageList button{background:#e7d2c9;color:#65311f;padding:6px 10px;min-height:35px;margin:0}
+#file{margin:10px 0}#fileStatus{min-height:30px;font-size:14px;color:#365d4e}
+#pinError{color:#a22424;min-height:22px}
+</style></head>
+<body><main>
+<header><div><h1>luister.</h1><span class="sub">Mijn verhalen</span></div><button class="iconbtn" id="lock" aria-label="Ouderinstellingen">⚙</button></header>
+<div id="cover" aria-hidden="true">📖</div>
+<h2 id="title">Kies een verhaal</h2><p id="subtitle">Jouw eigen luisterboeken</p>
+<input id="seek" type="range" min="0" max="100" value="0" aria-label="Voortgang in verhaal" disabled>
+<div id="times"><span id="elapsed">0:00</span><span id="total">0:00</span></div>
+<div id="controls"><button id="prev" aria-label="30 seconden terug" disabled>↶ 30</button><button id="play" aria-label="Afspelen" disabled>▶</button><button id="next" aria-label="30 seconden vooruit" disabled>30 ↷</button></div>
+<div id="timerRow"><span id="timerLabel">☾ Slaaptimer uit</span><button id="timerBtn">Timer</button></div>
+<p id="info" role="status"></p>
+<h2>Mijn collectie</h2><div id="library"></div><div id="empty"><strong>Nog geen verhalen toegevoegd.</strong><p>Een ouder kan een eigen MP3-, M4A- of WAV-bestand toevoegen via het tandwiel. Daarna kan je hier direct luisteren.</p></div>
+<p class="hint">Eigen audio wordt uitsluitend op dit apparaat opgeslagen. Gebruik alleen bestanden die je zelf mag gebruiken. Dit is geen Spotify-speler.</p>
+<audio id="audio" preload="metadata"></audio>
+</main>
+<dialog id="pinDialog"><h2>Alleen voor ouders</h2><form id="pinForm"><label for="pin">Ouderpincode</label><input type="password" inputmode="numeric" pattern="[0-9]{4,8}" id="pin" required autocomplete="off"><p id="pinError" role="alert"></p><button type="submit">Ontgrendelen</button><button type="button" class="secondary" id="cancelPin">Annuleren</button></form></dialog>
+<dialog id="manageDialog"><h2>Verhalen beheren</h2><p>Voeg eigen audiobestanden toe. Ze blijven lokaal op deze iPhone, niet op GitHub.</p>
+<label for="file">Audio toevoegen</label><input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" multiple>
+<p id="fileStatus" role="status"></p><div id="manageList"></div>
+<label for="newPin">Nieuwe ouderpincode (optioneel)</label><input type="password" id="newPin" inputmode="numeric" pattern="[0-9]{4,8}" placeholder="4–8 cijfers">
+<button id="saveSettings" type="button">Bewaar en sluit</button><button class="secondary" type="button" id="closeManage">Sluiten</button>
+<p class="hint" style="color:#567365">Dit is een eenvoudig interface-slot, geen beveiliging tegen technisch ingestelde gebruikers. Voor echt afschermen van de iPhone gebruik je Begeleide toegang.</p>
+</dialog>
+<script>
+"use strict";
+const $=id=>document.getElementById(id),audio=$("audio");
+const DB="luister-audiobooks-v1",TABLE="files",POSITION="luister-audio-positions",SELECTED="luister-audio-selected";
+let db=null,items=[],selected=localStorage.getItem(SELECTED)||"",objectUrl="",timeoutAt=0,lastSave=0;
+const emojis=["📖","🌳","🐻","🌊","🌙","🦊","✨","🏡"];
+const fmt=s=>{if(!Number.isFinite(s))return "0:00";s=Math.floor(Math.max(0,s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=String(s%60).padStart(2,"0");return h?h+":"+String(m).padStart(2,"0")+":"+sec:m+":"+sec};
+function readPositions(){try{return JSON.parse(localStorage.getItem(POSITION)||"{}")}catch{return {}}}
+function savePosition(){if(!selected||!Number.isFinite(audio.currentTime))return;let p=readPositions();p[selected]=audio.currentTime;localStorage.setItem(POSITION,JSON.stringify(p))}
+function show(msg){$("info").textContent=msg}
+function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB,1);req.onupgradeneeded=()=>{req.result.createObjectStore(TABLE,{keyPath:"id"})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+function tx(mode,fn){return new Promise((resolve,reject)=>{const t=db.transaction(TABLE,mode),st=t.objectStore(TABLE);let result;t.oncomplete=()=>resolve(result);t.onerror=()=>reject(t.error);const req=fn(st);req.onsuccess=()=>result=req.result;req.onerror=()=>reject(req.error)})}
+async function refresh(){items=(await tx("readonly",s=>s.getAll())).sort((a,b)=>a.created-b.created);renderList();renderManage();if(selected&&!items.some(x=>x.id===selected)){selected="";audio.pause();audio.removeAttribute("src");release();renderNow()}}
+function release(){if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=""}}
+async function choose(id,autoplay){const row=items.find(x=>x.id===id);if(!row)return;savePosition();audio.pause();release();selected=id;localStorage.setItem(SELECTED,id);objectUrl=URL.createObjectURL(row.file);audio.src=objectUrl;audio.load();renderNow();audio.addEventListener("loadedmetadata",function restore(){const p=readPositions()[id]||0;if(Number.isFinite(audio.duration)&&p<audio.duration-3)audio.currentTime=p;audio.removeEventListener("loadedmetadata",restore);renderNow();if(autoplay)audio.play().catch(()=>show("Tik op afspelen om te beginnen."))},{once:false})}
+function renderNow(){const row=items.find(x=>x.id===selected);$("title").textContent=row?row.name:"Kies een verhaal";$("cover").textContent=row?emojis[Math.max(0,items.indexOf(row))%emojis.length]:"📖";$("subtitle").textContent=row?"Je kunt verder luisteren waar je gebleven was.":"Jouw eigen luisterboeken";for(const id of ["seek","prev","next","play"])$(id).disabled=!row;$("play").textContent=audio.paused?"▶":"⏸";$("play").setAttribute("aria-label",audio.paused?"Afspelen":"Pauzeren");renderProgress();renderList()}
+function renderProgress(){$("elapsed").textContent=fmt(audio.currentTime);$("total").textContent=fmt(audio.duration);$("seek").value=Number.isFinite(audio.duration)&&audio.duration>0?audio.currentTime/audio.duration*100:0}
+function renderList(){$("library").replaceChildren(...items.map((x,i)=>{const b=document.createElement("button");b.className="story"+(x.id===selected?" active":"");const e=document.createElement("span"),n=document.createElement("span");e.className="emoji";e.textContent=emojis[i%emojis.length];n.textContent=x.name;b.append(e,n);b.onclick=()=>choose(x.id,true);return b}));$("empty").hidden=items.length>0}
+function renderManage(){$("manageList").replaceChildren(...items.map(x=>{const r=document.createElement("div"),name=document.createElement("span"),del=document.createElement("button");name.textContent=x.name;del.textContent="Verwijder";del.setAttribute("aria-label","Verwijder "+x.name);del.onclick=async()=>{if(!confirm("Verwijder dit verhaal van dit apparaat?"))return;await tx("readwrite",s=>s.delete(x.id));await refresh();show("Verhaal verwijderd.")};r.append(name,del);return r}))}
+$("play").onclick=()=>{if(audio.paused)audio.play().catch(()=>show("Afspelen kon niet starten."));else audio.pause()};
+$("prev").onclick=()=>audio.currentTime=Math.max(0,audio.currentTime-30);
+$("next").onclick=()=>{if(Number.isFinite(audio.duration))audio.currentTime=Math.min(audio.duration,audio.currentTime+30)};
+$("seek").oninput=()=>{if(Number.isFinite(audio.duration))audio.currentTime=Number($("seek").value)/100*audio.duration};
+audio.addEventListener("play",renderNow);audio.addEventListener("pause",()=>{savePosition();renderNow()});
+audio.addEventListener("timeupdate",()=>{renderProgress();if(Date.now()-lastSave>4000){lastSave=Date.now();savePosition()}if(timeoutAt&&Date.now()>=timeoutAt){audio.pause();timeoutAt=0;renderTimer();show("Slaaptimer afgelopen.")}});
+audio.addEventListener("ended",()=>{let p=readPositions();p[selected]=0;localStorage.setItem(POSITION,JSON.stringify(p));renderNow()});
+audio.addEventListener("error",()=>show("Dit bestand kan op deze iPhone niet worden afgespeeld."));
+function renderTimer(){$("timerLabel").textContent=timeoutAt?"☾ Slaaptimer: "+Math.max(0,Math.ceil((timeoutAt-Date.now())/60000))+" min":"☾ Slaaptimer uit"}
+$("timerBtn").onclick=()=>{const values=[0,5,15,30,60],current=Number(localStorage.getItem("luister-audio-timer")||0),next=values[(values.indexOf(current)+1)%values.length];localStorage.setItem("luister-audio-timer",String(next));timeoutAt=next?Date.now()+next*60000:0;renderTimer();show(next?"Slaaptimer ingesteld op "+next+" minuten.":"Slaaptimer uit.")};
+setInterval(()=>{if(timeoutAt&&Date.now()>=timeoutAt){audio.pause();timeoutAt=0;show("Slaaptimer afgelopen.")}renderTimer()},1000);
+$("lock").onclick=()=>{$("pin").value="";$("pinError").textContent="";$("pinDialog").showModal()};
+$("cancelPin").onclick=()=>$("pinDialog").close();
+$("pinForm").onsubmit=e=>{e.preventDefault();if($("pin").value===(localStorage.getItem("luister-parent-pin")||"1234")){$("pinDialog").close();$("newPin").value="";$("fileStatus").textContent="";renderManage();$("manageDialog").showModal()}else $("pinError").textContent="Pincode onjuist"};
+$("closeManage").onclick=()=>$("manageDialog").close();
+$("saveSettings").onclick=()=>{const p=$("newPin").value;if(p&&!/^[0-9]{4,8}$/.test(p)){$("newPin").reportValidity();return}if(p)localStorage.setItem("luister-parent-pin",p);$("manageDialog").close()};
+$("file").addEventListener("change",async e=>{const files=Array.from(e.target.files);if(!files.length)return;$("fileStatus").textContent="Bestanden opslaan op dit apparaat…";let count=0;for(const file of files){const looksAudio=file.type.startsWith("audio/")||/\.(mp3|m4a|aac|wav|ogg)$/i.test(file.name);if(!looksAudio){$("fileStatus").textContent="Bestandstype niet ondersteund: "+file.name;continue}try{await tx("readwrite",s=>s.put({id:crypto.randomUUID(),name:file.name.replace(/\.[^.]+$/,""),created:Date.now()+count,file}));count++}catch(err){$("fileStatus").textContent="Opslaan mislukt. Mogelijk onvoldoende opslagruimte op de iPhone.";break}}$("file").value="";await refresh();if(count)$("fileStatus").textContent=count+" verhaal/verhalen lokaal toegevoegd."});
+window.addEventListener("pagehide",savePosition);
+(async()=>{try{db=await openDB();await refresh();if(selected&&items.some(x=>x.id===selected))await choose(selected,false);show(items.length?"Kies een verhaal om af te spelen.":"Voeg via ⚙ eerst je eigen audio toe.")}catch(e){show("Lokale opslag is niet beschikbaar. Open de app in Safari en controleer de opslaginstellingen.")}})();
+</script></body></html>
